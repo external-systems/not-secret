@@ -1,0 +1,3 @@
+{
+  domains.primary = "example.com";
+}
