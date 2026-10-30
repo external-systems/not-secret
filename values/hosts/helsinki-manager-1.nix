@@ -15,6 +15,9 @@
       };
     };
     # Extra ordered IPv4 for the node's LoadBalancer pool.
-    addresses.lb-extra = "203.0.113.27";
+    addresses.lb-extra = {
+      address = "203.0.113.27";
+      link = "public";
+    };
   };
 }

@@ -23,6 +23,22 @@
           default = null;
           description = "The ${family} default gateway on this network.";
         };
+        pools = mkOption {
+          type = types.attrsOf (types.submodule {
+            options = {
+              start = mkOption {
+                type = ipType;
+                description = "First address of the range.";
+              };
+              end = mkOption {
+                type = ipType;
+                description = "Last address of the range.";
+              };
+            };
+          });
+          default = {};
+          description = "Named ${family} address ranges, e.g. a DHCP pool or a LoadBalancer pool.";
+        };
       };
     };
 
@@ -86,6 +102,56 @@
     };
   };
 
+  # A single address the host owns beyond its link addresses. A bare
+  # string is shorthand for `{address = "...";}`.
+  extraAddress = types.coercedTo t.ip (address: {inherit address;}) (types.submodule {
+    options = {
+      address = mkOption {
+        type = t.ip;
+        description = "The address, without prefix length.";
+      };
+      kind = mkOption {
+        type = types.enum ["additional" "floating" "failover" "vip" "anycast"];
+        default = "additional";
+        description = ''
+          additional: a fixed extra address on this host; floating: a
+          cloud IP that can be reassigned between hosts; failover: a
+          provider failover IP; vip: a service or load-balancer address;
+          anycast: announced by several hosts.
+        '';
+      };
+      link = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Logical link (key of `links`) the address is bound or announced on.";
+      };
+    };
+  });
+
+  # A whole subnet routed to or owned by the host.
+  hostPrefix = types.submodule {
+    options = {
+      cidr = mkOption {
+        type = types.either t.cidr4 t.cidr6;
+        description = "The subnet, e.g. 2001:db8:2::/64.";
+      };
+      kind = mkOption {
+        type = types.enum ["routed" "floating" "delegated" "on-link"];
+        default = "routed";
+        description = ''
+          routed: a provider subnet routed to this host; floating: a subnet
+          that can move between hosts; delegated: a prefix delegated to this
+          host (DHCPv6-PD); on-link: an extra subnet directly on a link.
+        '';
+      };
+      link = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Logical link (key of `links`) the subnet arrives on or is served from.";
+      };
+    };
+  };
+
   host = types.submodule {
     options = {
       fqdn = mkOption {
@@ -104,9 +170,14 @@
         description = "Links keyed by logical name (lan, wifi, sfp0), matching netif link names.";
       };
       addresses = mkOption {
-        type = types.attrsOf t.ip;
+        type = types.attrsOf extraAddress;
         default = {};
-        description = "Named addresses that are not on a link: failover IPs, VIPs, load-balancer IPs.";
+        description = "Named single addresses beyond link addresses: floating, failover, VIP, anycast.";
+      };
+      prefixes = mkOption {
+        type = types.attrsOf hostPrefix;
+        default = {};
+        description = "Named subnets bound to the host: routed provider subnets, floating or delegated prefixes.";
       };
     };
   };
@@ -181,12 +252,19 @@ in {
   };
 
   config.assertions = lib.flatten (lib.mapAttrsToList (
-      hostName: hostCfg:
+      hostName: hostCfg: let
+        linkRef = section: name: entry: {
+          assertion = entry.link == null || hostCfg.links ? ${entry.link};
+          message = "hosts.${hostName}.${section}.${name}.link = \"${toString entry.link}\" names no entry in hosts.${hostName}.links.";
+        };
+      in
         lib.mapAttrsToList (linkName: linkCfg: {
           assertion = linkCfg.network == null || config.networks ? ${linkCfg.network};
           message = "hosts.${hostName}.links.${linkName}.network = \"${toString linkCfg.network}\" names no entry in `networks`.";
         })
         hostCfg.links
+        ++ lib.mapAttrsToList (linkRef "addresses") hostCfg.addresses
+        ++ lib.mapAttrsToList (linkRef "prefixes") hostCfg.prefixes
     )
     config.hosts);
 }

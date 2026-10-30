@@ -32,6 +32,40 @@
     };
     shapeParityPasses = vlib.assertSameShape base (lib.recursiveUpdate base {hosts.h.links.l.ipv4 = ["10.0.0.1/8" "10.0.0.2/8"];});
     shapeParityCatchesExtraHost = fails (vlib.assertSameShape base (lib.recursiveUpdate base {hosts.other = {};}));
+    bareAddressCoerces =
+      (evalWith {hosts.h.addresses.a = "192.0.2.5";}).hosts.h.addresses.a
+      == {
+        address = "192.0.2.5";
+        kind = "additional";
+        link = null;
+      };
+    rejectsBadAddressKind =
+      fails
+      (evalWith {
+        hosts.h.addresses.a = {
+          address = "192.0.2.5";
+          kind = "bogus";
+        };
+      }).hosts;
+    acceptsMixedFamilyPrefixes =
+      builtins.attrNames
+      (evalWith {
+        hosts.h.prefixes = {
+          v4.cidr = "198.51.100.0/28";
+          v6.cidr = "2001:db8:2::/64";
+        };
+      }).hosts.h.prefixes
+      == ["v4" "v6"];
+    placeholderGuardCatchesRealPrefix = fails (vlib.assertPlaceholdersOnly (lib.recursiveUpdate base {hosts.h.prefixes.p.cidr = "2a01:4f9::/64";}));
+    danglingAddressLinkRejected = fails (vlib.mkValuesFrom [
+      {
+        meta.placeholder = true;
+        hosts.h.addresses.a = {
+          address = "192.0.2.5";
+          link = "nope";
+        };
+      }
+    ]);
     danglingNetworkRejected = fails (vlib.mkValuesFrom [
       {
         meta.placeholder = true;

@@ -69,7 +69,7 @@
     else null;
 
   # Keys that hold free text or kernel names, never network facts.
-  skipKeys = ["description" "interface" "network"];
+  skipKeys = ["description" "interface" "network" "link" "kind"];
 
   leaves = path: v:
     if builtins.isAttrs v
