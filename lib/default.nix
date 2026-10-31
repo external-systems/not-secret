@@ -5,7 +5,7 @@
   # Every .nix file under dir, except `_`-prefixed ones (import-tree rule).
   valueFiles = dir:
     builtins.filter (
-      f: lib.hasSuffix ".nix" f && !lib.hasPrefix "_" (builtins.baseNameOf f)
+      f: lib.hasSuffix ".nix" f && !lib.hasPrefix "_" (baseNameOf f)
     ) (lib.filesystem.listFilesRecursive dir);
 
   # Documentation ranges (RFC 5737, RFC 3849, RFC 7042, RFC 2606/6761).
@@ -109,7 +109,7 @@ in rec {
   in
     if failed != []
     then throw "values:\n${lib.concatMapStringsSep "\n" (a: "- ${a.message}") failed}"
-    else builtins.removeAttrs config ["assertions" "_module"];
+    else removeAttrs config ["assertions" "_module"];
 
   # "192.0.2.10/24" -> "192.0.2.10"
   addr = cidr: builtins.head (lib.splitString "/" cidr);

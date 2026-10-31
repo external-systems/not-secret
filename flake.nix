@@ -4,14 +4,19 @@
   inputs = {
     # Shared-input authority for the org: nixpkgs (only its lib is used
     # here) and flake-parts come from the artifact flake, so consumers
-    # that already follow pkgs lock nothing new.
-    pkgs.url = "github:external-systems/pkgs";
-    nixpkgs.follows = "pkgs/nixpkgs";
-    flake-parts.follows = "pkgs/flake-parts";
+    # that already follow it lock nothing new. Named org-pkgs, never
+    # pkgs: `pkgs` is the nixpkgs package set everywhere else.
+    org-pkgs.url = "github:external-systems/pkgs";
+    nixpkgs.follows = "org-pkgs/nixpkgs";
+    flake-parts.follows = "org-pkgs/flake-parts";
   };
 
   outputs = inputs:
     inputs.flake-parts.lib.mkFlake {inherit inputs;} {
+      # Exposes debug.options / currentSystem.options, which nixd
+      # (.vscode/settings.json) reads for flake-parts option hints.
+      debug = true;
+
       systems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -19,7 +24,7 @@
 
       imports = [
         inputs.flake-parts.flakeModules.partitions
-        ./flake-module.nix
+        ./flakeModules/values.nix
       ];
 
       values = {
@@ -27,14 +32,20 @@
         placeholder = true;
       };
 
-      # Checks, formatter and devShell are evaluated only on demand; a
-      # consumer reading `values` never touches them.
+      # Apps, checks, the formatter and docs are evaluated only on demand;
+      # a consumer reading `values` never fetches dev/flake.nix's inputs.
+      # The dev shell is devenv (devenv.yaml), not a flake output.
       partitionedAttrs = {
+        apps = "dev";
         checks = "dev";
-        devShells = "dev";
         formatter = "dev";
+        # Docs/slides: `nix build .#documentation` (pkgs flakeModules.dev).
+        legacyPackages = "dev";
       };
 
-      partitions.dev.module = ./dev/flake-module.nix;
+      partitions.dev = {
+        module = ./dev/flake-module.nix;
+        extraInputsFlake = ./dev;
+      };
     };
 }

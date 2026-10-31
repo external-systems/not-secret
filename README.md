@@ -25,7 +25,7 @@ in either repo.
 | `schemaVersion` | Bumped on breaking shape changes |
 | `modules.schema` | The schema as a plain module |
 | `flakeModules.values` | Turns a `values/` directory into the outputs above |
-| `flakeModules.dev` | Checks, formatter and devShell (dev partition) |
+| `flakeModules.checks` | The value guards (`lib-tests`, `placeholders-only`/`no-placeholders`, `shape-parity`) for a dev partition |
 
 ## Schema
 
@@ -84,7 +84,7 @@ host. Every `.nix` file is imported; `_`-prefixed files are skipped.
 # flake.nix
 inputs.secrets = {
   url = "github:external-systems/not-secrets";
-  inputs.pkgs.follows = "pkgs"; # if you already follow external-systems/pkgs
+  inputs.org-pkgs.follows = "org-pkgs"; # if you already follow external-systems/pkgs
 };
 
 # clan inventory / machine modules, with secrets = inputs.secrets.values
@@ -121,10 +121,19 @@ A deploy script should also call
 
 ## Development
 
+The repo follows the org flake standard: consumer outputs at the root,
+formatter, checks and docs in the `dev` partition (inputs in
+`dev/flake.nix`, locked in `dev/flake.lock`), and the devenv CLI shell.
+Needs Nix and devenv.
+
 ```sh
-nix fmt .
-nix flake check
+devenv allow     # auto-activates the shell on cd (after `devenv hook`)
+fmt              # nix fmt: treefmt with the org linters
+check            # nix flake check: treefmt, lock-sync, guards, docs
+docs-build       # static docs to ./result-docs; open index.html from disk
 ```
+
+After `nix flake update org-pkgs`, run `sync-locks` in the same commit.
 
 Every host, link and network here must also exist in `secrets`
 (`checks.shape-parity` there), so add a placeholder first when adding a

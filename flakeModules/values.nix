@@ -8,7 +8,7 @@
   lib,
   ...
 }: let
-  valuesLib = import ./lib {inherit lib;};
+  valuesLib = import ../lib {inherit lib;};
   cfg = config.values;
 in {
   options.values = {
@@ -27,8 +27,8 @@ in {
 
   config.flake = {
     flakeModules = {
-      values = ./flake-module.nix;
-      dev = ./dev/flake-module.nix;
+      values = ./values.nix;
+      checks = ./checks.nix;
     };
     lib = valuesLib;
     modules.schema = valuesLib.schemaModule;
