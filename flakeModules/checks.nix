@@ -9,7 +9,7 @@
   ...
 }: let
   vlib = self.lib;
-  inherit (self.values.meta) placeholder;
+  isPlaceholder = self.values.meta.placeholder;
   # secrets declares not-secrets as an input: its values are the shape
   # reference. not-secrets has no such input and skips the parity check.
   reference = inputs.not-secrets.values or null;
@@ -26,7 +26,7 @@ in {
         lib-tests = guard "lib-tests" (import ../lib/tests.nix {inherit lib vlib;});
       }
       // (
-        if placeholder
+        if isPlaceholder
         then {placeholders-only = guard "placeholders-only" (vlib.assertPlaceholdersOnly self.values);}
         else {no-placeholders = guard "no-placeholders" (vlib.assertNoPlaceholders self.values);}
       )
