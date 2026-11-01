@@ -38,7 +38,7 @@ in either repo.
 | `networks.<name>` | `ipv4`/`ipv6` each `{cidr, gateway, pools.<name>.{start,end}}`, `nameservers`, `mtu`, `vlan` |
 | `hosts.<machine>` | `fqdn`, `targetHost`, `links.<logical>.{interface,mac,network,ipv4,ipv6}`, `addresses.<name>.{address,kind,link}`, `prefixes.<name>.{cidr,kind,link}` |
 | `ports.<name>` | port |
-| `storageboxes.<purpose>` | Hetzner Storage Box: `user` (`u000000` or `u000000-sub1`), `host` (default `<user>.your-storagebox.de`), `port` (default 23, SSH/SFTP/rsync) |
+| `storageboxes.<purpose>` | Hetzner Storage Box: `user` (`u000000`), `host` (default `<user>.your-storagebox.de`), `port` (default 23, SSH/SFTP/rsync), `subAccounts.<linux-user>.{user,host,port}` (a bare `"u000000-sub1"` is shorthand; host defaults from the id, port from the box; the id must be `<box user>-subN`) |
 | `extra` | untyped escape hatch; promote to a typed section once a kind repeats |
 
 Link addresses are CIDR strings (`"192.0.2.10/24"`), the shape netif's

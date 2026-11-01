@@ -182,8 +182,10 @@
     };
   };
 
-  # A Hetzner Storage Box (or sub-account), reached over SSH/SFTP/rsync.
-  storagebox = types.submodule ({config, ...}: {
+  # One Storage Box login: user, host and port. The host defaults from
+  # the user; the port defaults to `defaultPort` (the parent box's port
+  # for a sub-account).
+  boxLogin = defaultPort: {config, ...}: {
     options = {
       user = mkOption {
         type = t.storageboxUser;
@@ -197,9 +199,26 @@
       };
       port = mkOption {
         type = t.port;
-        default = 23;
+        default = defaultPort;
         description = "SSH/SFTP/rsync port. Port 22 is SFTP/SCP only on Storage Boxes; 23 serves the full SSH set.";
       };
+    };
+  };
+
+  # A Hetzner Storage Box, reached over SSH/SFTP/rsync, and its
+  # sub-accounts. A bare string sub-account is shorthand for `{user = "...";}`.
+  storagebox = types.submodule ({config, ...}: {
+    imports = [(boxLogin 23)];
+    options.subAccounts = mkOption {
+      type =
+        types.attrsOf (types.coercedTo t.storageboxUser (user: {inherit user;})
+          (types.submodule (boxLogin config.port)));
+      default = {};
+      description = ''
+        Sub-accounts of this box keyed by Linux user name, e.g.
+        `netsa = "u000000-sub1"`. Each person mounts their own
+        sub-account, never the main account.
+      '';
     };
   });
 in {
@@ -278,20 +297,30 @@ in {
     };
   };
 
-  config.assertions = lib.flatten (lib.mapAttrsToList (
-      hostName: hostCfg: let
-        linkRef = section: name: entry: {
-          assertion = entry.link == null || hostCfg.links ? ${entry.link};
-          message = "hosts.${hostName}.${section}.${name}.link = \"${toString entry.link}\" names no entry in hosts.${hostName}.links.";
-        };
-      in
-        lib.mapAttrsToList (linkName: linkCfg: {
-          assertion = linkCfg.network == null || config.networks ? ${linkCfg.network};
-          message = "hosts.${hostName}.links.${linkName}.network = \"${toString linkCfg.network}\" names no entry in `networks`.";
-        })
-        hostCfg.links
-        ++ lib.mapAttrsToList (linkRef "addresses") hostCfg.addresses
-        ++ lib.mapAttrsToList (linkRef "prefixes") hostCfg.prefixes
-    )
-    config.hosts);
+  config.assertions =
+    lib.flatten (lib.mapAttrsToList (
+        boxName: box:
+          lib.mapAttrsToList (subName: sub: {
+            assertion = builtins.match "${box.user}-sub[0-9]+" sub.user != null;
+            message = "storageboxes.${boxName}.subAccounts.${subName}.user = \"${sub.user}\" is not a sub-account of ${box.user} (expected ${box.user}-subN).";
+          })
+          box.subAccounts
+      )
+      config.storageboxes)
+    ++ lib.flatten (lib.mapAttrsToList (
+        hostName: hostCfg: let
+          linkRef = section: name: entry: {
+            assertion = entry.link == null || hostCfg.links ? ${entry.link};
+            message = "hosts.${hostName}.${section}.${name}.link = \"${toString entry.link}\" names no entry in hosts.${hostName}.links.";
+          };
+        in
+          lib.mapAttrsToList (linkName: linkCfg: {
+            assertion = linkCfg.network == null || config.networks ? ${linkCfg.network};
+            message = "hosts.${hostName}.links.${linkName}.network = \"${toString linkCfg.network}\" names no entry in `networks`.";
+          })
+          hostCfg.links
+          ++ lib.mapAttrsToList (linkRef "addresses") hostCfg.addresses
+          ++ lib.mapAttrsToList (linkRef "prefixes") hostCfg.prefixes
+      )
+      config.hosts);
 }

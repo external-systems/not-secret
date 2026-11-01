@@ -78,6 +78,7 @@
         user = "u000000";
         host = "u000000.your-storagebox.de";
         port = 23;
+        subAccounts = {};
       };
     storageboxSubAccountHost = (evalWith {storageboxes.b.user = "u000000-sub1";}).storageboxes.b.host == "u000000-sub1.your-storagebox.de";
     storageboxHostOverride =
@@ -88,6 +89,61 @@
         };
       }).storageboxes.b.host
       == "backup.example.com";
+    subAccountShorthandInheritsPort =
+      (evalWith {
+        storageboxes.b = {
+          user = "u000000";
+          port = 2222;
+          subAccounts.alice = "u000000-sub1";
+        };
+      }).storageboxes.b.subAccounts.alice
+      == {
+        user = "u000000-sub1";
+        host = "u000000-sub1.your-storagebox.de";
+        port = 2222;
+      };
+    foreignSubAccountRejected = fails (vlib.mkValuesFrom [
+      {
+        meta.placeholder = true;
+        storageboxes.b = {
+          user = "u000000";
+          subAccounts.alice = "u000001-sub1";
+        };
+      }
+    ]);
+    mainAccountAsSubAccountRejected = fails (vlib.mkValuesFrom [
+      {
+        meta.placeholder = true;
+        storageboxes.b = {
+          user = "u000000";
+          subAccounts.alice = "u000000";
+        };
+      }
+    ]);
+    placeholderGuardCatchesRealSubAccount = fails (vlib.assertPlaceholdersOnly (vlib.mkValuesFrom [
+      (base
+        // {
+          storageboxes.main = {
+            user = "u000000";
+            subAccounts = {
+              alice = "u000000-sub1";
+              bob = {
+                user = "u000000-sub2";
+                host = "u123456-sub2.your-storagebox.de";
+              };
+            };
+          };
+        })
+    ]));
+    placeholderGuardPassesSubAccount = vlib.assertPlaceholdersOnly (vlib.mkValuesFrom [
+      (base
+        // {
+          storageboxes.main = {
+            user = "u000000";
+            subAccounts.alice = "u000000-sub1";
+          };
+        })
+    ]);
     rejectsBadStorageboxUser = fails (evalWith {storageboxes.b.user = "000000";}).storageboxes;
     rejectsBadStorageboxPort =
       fails
