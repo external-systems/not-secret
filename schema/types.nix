@@ -57,5 +57,10 @@ in rec {
     named "ifname" "Linux interface name (max 15 characters)"
     (types.strMatching "[^/:[:space:]]{1,15}");
 
+  # Hetzner Storage Box account (u123456) or sub-account (u123456-sub1).
+  storageboxUser =
+    named "storageboxUser" "Hetzner Storage Box account id, e.g. u000000 or u000000-sub1"
+    (types.strMatching "u[0-9]+(-sub[0-9]+)?");
+
   inherit (types) port;
 }

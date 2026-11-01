@@ -11,7 +11,7 @@ with `--override-input`.
 - `flakeModules/values.nix`: turns `values/` into the `values`, `lib`, `modules.schema`, `schemaVersion` and `flakeModules` outputs. secrets imports it as `flakeModules.values`.
 - `flakeModules/checks.nix`: the value guards; secrets imports it as `flakeModules.checks`.
 - `schema/`, `lib/`: the schema module and pure helpers (`lib/tests.nix`: eval tests).
-- `values/`: placeholders only (RFC 5737/3849/7042/2606 ranges).
+- `values/`: placeholders only (RFC 5737/3849/7042/2606 ranges, all-zero Storage Box ids).
 - `dev/flake.nix` + `dev/flake.lock`: dev-only inputs. `dev/flake-module.nix`: the dev partition (formatter, checks, docs).
 - `devenv.yaml` + `devenv.lock` + `devenv.nix`: the dev shell. The org shell comes from external-systems/pkgs (`org-pkgs/devenv` in devenv.yaml).
 - `documentation/`: MkDocs site (`docs/`) and reveal.js deck (`slides/`).
@@ -26,5 +26,5 @@ with `--override-input`.
 - Load the `nix-style` skill before editing any `.nix` file.
 - Dev-only inputs go in `dev/flake.nix`, never `flake.nix`.
 - Never put a real value here: `checks.placeholders-only` fails on anything outside the documentation ranges.
-- A new host, link, network, domain or port lands here first, then in secrets (`checks.shape-parity`).
+- A new host, link, network, domain, port or storage box lands here first, then in secrets (`checks.shape-parity`).
 - Work on a branch and open a PR. Never push to `main`.

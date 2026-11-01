@@ -23,6 +23,19 @@
       "test"
       "invalid"
     ];
+  # Storage Box ids are account facts: all-zero (u000000) is the
+  # placeholder, anything else is a real account. Hosts under
+  # your-storagebox.de are classified by their account label.
+  docBoxUser = s: builtins.match "u0+(-sub[0-9]+)?" s != null;
+  boxLabel = s: let
+    first = builtins.head (lib.splitString "." s);
+  in
+    if t.storageboxUser.check s
+    then s
+    else if lib.hasSuffix ".your-storagebox.de" (lib.toLower s) && t.storageboxUser.check first
+    then first
+    else null;
+
   # Values that are neither placeholder nor sensitive: link-local,
   # loopback, unspecified. Allowed in both repos.
   neutral = s: let
@@ -38,6 +51,13 @@
   in
     if neutral addr
     then "neutral"
+    else if boxLabel addr != null
+    then
+      (
+        if docBoxUser (boxLabel addr)
+        then "placeholder"
+        else "real"
+      )
     else if t.ipv4.check addr
     then
       (

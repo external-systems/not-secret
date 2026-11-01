@@ -9,8 +9,10 @@ deploy time.
 Placeholders use documentation ranges only: IPv4 from RFC 5737
 (`192.0.2.0/24`, `198.51.100.0/24`, `203.0.113.0/24`), IPv6 from RFC 3849
 (`2001:db8::/32`), MACs from RFC 7042 (`00:00:5e:00:53:xx`), and names
-under RFC 2606 (`example.com`, `.test`). `checks.placeholders-only` fails if
-anything else lands here.
+under RFC 2606 (`example.com`, `.test`). Hetzner Storage Box ids are
+all-zero (`u000000`, `u000000-sub1`), and so is the account label of their
+`*.your-storagebox.de` hosts. `checks.placeholders-only` fails if anything
+else lands here.
 
 Everything here ends up in the world-readable `/nix/store` of a deployed
 machine. Credentials (keys, tokens, passwords) belong in clan vars, never
@@ -36,6 +38,7 @@ in either repo.
 | `networks.<name>` | `ipv4`/`ipv6` each `{cidr, gateway, pools.<name>.{start,end}}`, `nameservers`, `mtu`, `vlan` |
 | `hosts.<machine>` | `fqdn`, `targetHost`, `links.<logical>.{interface,mac,network,ipv4,ipv6}`, `addresses.<name>.{address,kind,link}`, `prefixes.<name>.{cidr,kind,link}` |
 | `ports.<name>` | port |
+| `storageboxes.<purpose>` | Hetzner Storage Box: `user` (`u000000`), `host` (default `<user>.your-storagebox.de`), `port` (default 23, SSH/SFTP/rsync), `subAccounts.<linux-user>.{user,host,port}` (a bare `"u000000-sub1"` is shorthand; host defaults from the id, port from the box; the id must be `<box user>-subN`) |
 | `extra` | untyped escape hatch; promote to a typed section once a kind repeats |
 
 Link addresses are CIDR strings (`"192.0.2.10/24"`), the shape netif's
@@ -135,6 +138,6 @@ docs-build       # static docs to ./result-docs; open index.html from disk
 
 After `nix flake update org-pkgs`, run `sync-locks` in the same commit.
 
-Every host, link and network here must also exist in `secrets`
+Every host, link, network and storage box here must also exist in `secrets`
 (`checks.shape-parity` there), so add a placeholder first when adding a
 machine.
