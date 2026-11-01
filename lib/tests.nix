@@ -72,6 +72,45 @@
         hosts.h.links.l.network = "nope";
       }
     ]);
+    storageboxDefaults =
+      (evalWith {storageboxes.main.user = "u000000";}).storageboxes.main
+      == {
+        user = "u000000";
+        host = "u000000.your-storagebox.de";
+        port = 23;
+      };
+    storageboxSubAccountHost = (evalWith {storageboxes.b.user = "u000000-sub1";}).storageboxes.b.host == "u000000-sub1.your-storagebox.de";
+    storageboxHostOverride =
+      (evalWith {
+        storageboxes.b = {
+          user = "u000000";
+          host = "backup.example.com";
+        };
+      }).storageboxes.b.host
+      == "backup.example.com";
+    rejectsBadStorageboxUser = fails (evalWith {storageboxes.b.user = "000000";}).storageboxes;
+    rejectsBadStorageboxPort =
+      fails
+      (evalWith {
+        storageboxes.b = {
+          user = "u000000";
+          port = 70000;
+        };
+      }).storageboxes;
+    placeholderGuardPassesStoragebox = vlib.assertPlaceholdersOnly (vlib.mkValuesFrom [(base // {storageboxes.main.user = "u000000";})]);
+    placeholderGuardCatchesRealStoragebox = fails (vlib.assertPlaceholdersOnly (vlib.mkValuesFrom [(base // {storageboxes.main.user = "u123456";})]));
+    realGuardCatchesPlaceholderStoragebox = fails (vlib.assertNoPlaceholders (vlib.mkValuesFrom [
+      {
+        meta.placeholder = false;
+        storageboxes.main.user = "u000000";
+      }
+    ]));
+    realGuardPassesStoragebox = vlib.assertNoPlaceholders (vlib.mkValuesFrom [
+      {
+        meta.placeholder = false;
+        storageboxes.main.user = "u123456";
+      }
+    ]);
   };
   failed = builtins.attrNames (lib.filterAttrs (_: ok: !ok) cases);
 in

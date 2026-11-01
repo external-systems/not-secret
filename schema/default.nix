@@ -181,6 +181,27 @@
       };
     };
   };
+
+  # A Hetzner Storage Box (or sub-account), reached over SSH/SFTP/rsync.
+  storagebox = types.submodule ({config, ...}: {
+    options = {
+      user = mkOption {
+        type = t.storageboxUser;
+        description = "Account or sub-account id, e.g. u000000 or u000000-sub1.";
+      };
+      host = mkOption {
+        type = t.dnsName;
+        default = "${config.user}.your-storagebox.de";
+        defaultText = lib.literalExpression ''"''${user}.your-storagebox.de"'';
+        description = "SSH host name of the box.";
+      };
+      port = mkOption {
+        type = t.port;
+        default = 23;
+        description = "SSH/SFTP/rsync port. Port 22 is SFTP/SCP only on Storage Boxes; 23 serves the full SSH set.";
+      };
+    };
+  });
 in {
   options = {
     meta = {
@@ -221,6 +242,12 @@ in {
       type = types.attrsOf t.port;
       default = {};
       description = "Port numbers by purpose, e.g. `wireguard-kube-mesh`.";
+    };
+
+    storageboxes = mkOption {
+      type = types.attrsOf storagebox;
+      default = {};
+      description = "Hetzner Storage Box accounts by purpose, e.g. `main`.";
     };
 
     extra = mkOption {

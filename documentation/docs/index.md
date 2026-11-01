@@ -28,7 +28,8 @@ clan machines update <machine> --flake . -- --override-input secrets github:exte
 
 Placeholders use documentation ranges only: IPv4 from RFC 5737, IPv6 from
 RFC 3849 (`2001:db8::/32`), MACs from RFC 7042 and names under RFC 2606
-(`example.com`, `.test`). `checks.placeholders-only` fails if anything else
+(`example.com`, `.test`), and Hetzner Storage Box ids are all-zero
+(`u000000`). `checks.placeholders-only` fails if anything else
 lands here; in secrets, `checks.no-placeholders` fails the other way round.
 
 Everything here ends up in the world-readable `/nix/store` of a deployed

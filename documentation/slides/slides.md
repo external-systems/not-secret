@@ -28,7 +28,7 @@ Never commit the override: the private rev would land in a public lock.
 ## Guards
 
 - `placeholders-only` here, `no-placeholders` in secrets
-- `shape-parity` in secrets: every host, link, network, domain and port exists in both
+- `shape-parity` in secrets: every host, link, network, domain, port and storage box exists in both
 
 ---
 
