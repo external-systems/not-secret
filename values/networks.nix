@@ -13,7 +13,7 @@
     };
 
     # Dedicated server public uplink (one routed subnet per server).
-    robot-helsinki-manager-1 = {
+    robot-euc-hel-0 = {
       ipv4 = {
         cidr = "203.0.113.0/26";
         gateway = "203.0.113.1";

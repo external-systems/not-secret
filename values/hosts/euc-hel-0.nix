@@ -1,10 +1,10 @@
 {
-  hosts.helsinki-manager-1 = {
-    targetHost = "deploy@203.0.113.40";
+  hosts.euc-hel-0 = {
+    targetHost = "root@203.0.113.40";
     links = {
       public = {
         interface = "eth0";
-        network = "robot-helsinki-manager-1";
+        network = "robot-euc-hel-0";
         ipv4 = ["203.0.113.40/26"];
         ipv6 = ["2001:db8:2::2/64"];
       };
